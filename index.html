@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Map Canvas</title>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.1/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.0.1/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+
+    <style>
+        #header{
+            height: 75px;
+            background-color: darkgoldenrod;
+        }
+        #mapdiv{
+            height: 650px;
+            background-color: salmon;
+        }
+        #side_panel{
+            height: 650px;
+            background-color: beige;
+        }
+        #footer{
+            height: 75px;
+            background-color: darkgray;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="header" class="col-md-12">
+        <h1 class="text-center">Mexico City</h1>
+    </div>
+    <div id="side_panel" class="col-md-3">
+        <h1 class="text-center">Attractions</h1>
+        <button id="zoomToZocalo" class="form-control btn-primary">Zócalo</button>
+    </div>
+    <div id="mapdiv" class="col-md-9"></div>
+    <div id="footer" class="col-md-12">
+        <h4 id="map_coords" class="text-center">Latitude: 19.4 Longitute: -99.1 Zoom Level:11</h4>
+        <h4 class="text-center">&copy;2016 <a href="http://millermountain.com">Miller Mountain LLC</a></h4>
+    </div>
+
+    
+    <script>
+        var mymap = L.map('mapdiv');
+        mymap.setView([19.4, -99.1], 11);
+
+        var backgroundLayer = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png');
+        mymap.addLayer(backgroundLayer);
+
+        var zocaloMarker = L.marker([19.43278, -99.13333]);
+        zocaloMarker.addTo(mymap);
+        //add a popup to the marker
+        zocaloMarker.bindPopup('<h3 class="text-center">Zócalo</h3><a href="https://en.wikipedia.org/wiki/Z%C3%B3calo" target="blank"><img src="./img/zocalo.jpg" width="200px"></a>');
+
+        //handle map events:
+
+        $('#zoomToZocalo').click(() => {
+            mymap.setView([19.43278, -99.13333], 17);
+        });
+
+        mymap.on('mousemove', (e) => {
+            let str = 'Latitude: ' + e.latlng.lat.toFixed(5) + "  Longitude: " + e.latlng.lng.toFixed(5) + "  Zoom Level: " + mymap.getZoom();
+            $('#map_coords').html(str);
+        });      
+
+        
+    </script>
+</body>
+</html>
