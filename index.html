@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.1/dist/leaflet.css">
     <script src="https://unpkg.com/leaflet@1.0.1/dist/leaflet.js"></script>
     <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+    <script src="./resources/leaflet.ajax.js"></script>
 
     <style>
         #header{
@@ -28,6 +29,9 @@
             height: 75px;
             background-color: darkgray;
         }
+        .attraction{
+            margin-bottom: 5px;
+        }
 
     </style>
 </head>
@@ -37,12 +41,12 @@
     </div>
     <div id="side_panel" class="col-md-3">
         <h1 class="text-center">Attractions</h1>
-        <button id="zoomToZocalo" class="form-control btn-primary">Zócalo</button>
+        <!-- <button id="zoomToZocalo" class="form-control btn-primary">Zócalo</button> -->
     </div>
     <div id="mapdiv" class="col-md-9"></div>
     <div id="footer" class="col-md-12">
         <h4 id="map_coords" class="text-center">Latitude: 19.4 Longitute: -99.1 Zoom Level:11</h4>
-        <h4 class="text-center">&copy;2016 <a href="http://millermountain.com">Miller Mountain LLC</a></h4>
+        <h4 class="text-center">&copy;2021 <a href="https://github.com/erikamariano">Erika Mariano</a></h4>
     </div>
 
     
@@ -53,21 +57,45 @@
         var backgroundLayer = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png');
         mymap.addLayer(backgroundLayer);
 
-        var zocaloMarker = L.marker([19.43278, -99.13333]);
-        zocaloMarker.addTo(mymap);
-        //add a popup to the marker
-        zocaloMarker.bindPopup('<h3 class="text-center">Zócalo</h3><a href="https://en.wikipedia.org/wiki/Z%C3%B3calo" target="blank"><img src="./img/zocalo.jpg" width="200px"></a>');
+        // var zocaloMarker = L.marker([19.43278, -99.13333]);
+        // zocaloMarker.addTo(mymap);
+        // //add a popup to the marker
+        // zocaloMarker.bindPopup('<h3 class="text-center">Zócalo</h3><a href="https://en.wikipedia.org/wiki/Z%C3%B3calo" target="blank"><img src="./img/zocalo.jpg" width="200px"></a>');
+
+        
+        // //button:
+        // $('#zoomToZocalo').click(() => {
+        //     mymap.setView([19.43278, -99.13333], 17);
+        // });
 
         //handle map events:
-
-        $('#zoomToZocalo').click(() => {
-            mymap.setView([19.43278, -99.13333], 17);
-        });
-
         mymap.on('mousemove', (e) => {
             let str = 'Latitude: ' + e.latlng.lat.toFixed(5) + "  Longitude: " + e.latlng.lng.toFixed(5) + "  Zoom Level: " + mymap.getZoom();
             $('#map_coords').html(str);
-        });      
+        }); 
+
+        //adding geoJSON data via Ajax:
+        let geoJsonLayer = new L.GeoJSON.AJAX('./data/attractions.geojson', {pointToLayer: (feature, latlng) => {
+
+            //creating buttons on the side panel:
+            let btn = '<button id="zoomTo' + feature.properties.name.replace(/ /g, '');
+            btn += '" class="form-control btn btn-primary attraction">';
+            btn += feature.properties.name + '</button>';
+            $('#side_panel').append(btn);
+
+            $('#zoomTo' + feature.properties.name.replace(/ /g, '')).click(() => {
+                mymap.setView([latlng.lat, latlng.lng], 17);
+            })
+
+            let str = '<h4>' + feature.properties.name + '</h4><hr>';
+            str += '<a href="' + feature.properties.web + '" target="blank">';
+            str += '<img src="img/' + feature.properties.image + '" width="200px">';
+            return L.marker(latlng).bindPopup(str);
+        }})
+        
+        geoJsonLayer.addTo(mymap);    
+        
+
 
         
     </script>
