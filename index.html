@@ -11,6 +11,7 @@
     <script src="https://unpkg.com/leaflet@1.0.1/dist/leaflet.js"></script>
     <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
     <script src="./resources/leaflet.ajax.js"></script>
+    <script src="./resources/turf.min.js"></script>
 
     <style>
         #header{
@@ -42,6 +43,7 @@
     <div id="side_panel" class="col-md-3">
         <h1 class="text-center">Attractions</h1>
         <!-- <button id="zoomToZocalo" class="form-control btn-primary">Zócalo</button> -->
+        <button id="btnBuffer" class="form-control btn-warning attraction">Buffer</button>
     </div>
     <div id="mapdiv" class="col-md-9"></div>
     <div id="footer" class="col-md-12">
@@ -50,54 +52,74 @@
     </div>
 
     
-    <script>
-        var mymap = L.map('mapdiv');
-        mymap.setView([19.4, -99.1], 11);
-
-        var backgroundLayer = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png');
-        mymap.addLayer(backgroundLayer);
-
-        // var zocaloMarker = L.marker([19.43278, -99.13333]);
-        // zocaloMarker.addTo(mymap);
-        // //add a popup to the marker
-        // zocaloMarker.bindPopup('<h3 class="text-center">Zócalo</h3><a href="https://en.wikipedia.org/wiki/Z%C3%B3calo" target="blank"><img src="./img/zocalo.jpg" width="200px"></a>');
-
-        
-        // //button:
-        // $('#zoomToZocalo').click(() => {
-        //     mymap.setView([19.43278, -99.13333], 17);
-        // });
-
-        //handle map events:
-        mymap.on('mousemove', (e) => {
-            let str = 'Latitude: ' + e.latlng.lat.toFixed(5) + "  Longitude: " + e.latlng.lng.toFixed(5) + "  Zoom Level: " + mymap.getZoom();
-            $('#map_coords').html(str);
-        }); 
-
-        //adding geoJSON data via Ajax:
-        let geoJsonLayer = new L.GeoJSON.AJAX('./data/attractions.geojson', {pointToLayer: (feature, latlng) => {
-
-            //creating buttons on the side panel:
-            let btn = '<button id="zoomTo' + feature.properties.name.replace(/ /g, '');
-            btn += '" class="form-control btn btn-primary attraction">';
-            btn += feature.properties.name + '</button>';
-            $('#side_panel').append(btn);
-
-            $('#zoomTo' + feature.properties.name.replace(/ /g, '')).click(() => {
-                mymap.setView([latlng.lat, latlng.lng], 17);
-            })
-
-            let str = '<h4>' + feature.properties.name + '</h4><hr>';
-            str += '<a href="' + feature.properties.web + '" target="blank">';
-            str += '<img src="img/' + feature.properties.image + '" width="200px">';
-            return L.marker(latlng).bindPopup(str);
-        }})
-        
-        geoJsonLayer.addTo(mymap);    
-        
-
-
-        
-    </script>
+    
 </body>
+
+<script>
+    let mymap = L.map('mapdiv');
+    mymap.setView([19.4, -99.1], 11);
+
+    let backgroundOsm = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png');
+    mymap.addLayer(backgroundOsm);
+
+    let backgroundTopo = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png');
+
+    let backgroundGoogleStr = L.tileLayer('http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',{subdomains:['mt0','mt1','mt2','mt3'] });
+
+    let backgroundGoogleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{subdomains:['mt0','mt1','mt2','mt3'] });
+
+    let baseMaps = {
+        "Open Street Maps": backgroundOsm,
+        "Topo Street Maps": backgroundTopo,
+        "Google Street Maps": backgroundGoogleStr,
+        "Google Satellite": backgroundGoogleSat
+    }
+
+    let controls = L.control.layers(baseMaps)
+    controls.addTo(mymap);
+
+    //handle map events:
+    mymap.on('mousemove', (e) => {
+        let str = 'Latitude: ' + e.latlng.lat.toFixed(5) + "  Longitude: " + e.latlng.lng.toFixed(5) + "  Zoom Level: " + mymap.getZoom();
+        $('#map_coords').html(str);
+    }); 
+
+    //adding geoJSON data via Ajax:
+    let geoJsonLayer = new L.GeoJSON.AJAX('./data/attractions.geojson', {pointToLayer: (feature, latlng) => {
+
+        //creating buttons on the side panel:
+        let btn = '<button id="zoomTo' + feature.properties.name.replace(/ /g, '');
+        btn += '" class="form-control btn btn-primary attraction">';
+        btn += feature.properties.name + '</button>';
+        $('#side_panel').append(btn);
+
+        $('#zoomTo' + feature.properties.name.replace(/ /g, '')).click(() => {
+            mymap.setView([latlng.lat, latlng.lng], 17);
+        })
+
+        let str = '<h4>' + feature.properties.name + '</h4><hr>';
+        str += '<a href="' + feature.properties.web + '" target="blank">';
+        str += '<img src="img/' + feature.properties.image + '" width="200px">';
+        return L.marker(latlng).bindPopup(str);
+    }})   
+    geoJsonLayer.addTo(mymap);    
+    
+    //adding a buffer to each attraction:
+    let bufferLayer;
+    $('#btnBuffer').click(() => {
+        if($('#btnBuffer').html() == 'Buffer'){
+
+            let bufferedAttractions = turf.buffer(geoJsonLayer.toGeoJSON(), 1, {units: 'kilometers'});
+            bufferLayer = L.geoJSON(bufferedAttractions).addTo(mymap);
+
+            $('#btnBuffer').html('Remove Buffer');
+        } else {
+
+            mymap.removeLayer(bufferLayer);
+            $('#btnBuffer').html('Buffer');
+        }
+    });
+
+    
+</script>
 </html>
